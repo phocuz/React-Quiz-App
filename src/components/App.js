@@ -5,6 +5,8 @@ import Loader from "./Loader";
 import Error from "./Error";
 import StartScreen from "./StartScreen";
 import Question from "./Question";
+import NextButton from "./NextButton";
+import Progress from "./Progress";
 
 const initialState = {
   questions: [],
@@ -40,14 +42,18 @@ function reducer(state, action) {
           answer: action.payload,
           points: action.payload ===question.correctOption ?
           state.points + question.points : state.points,
-        }
+        };
+        case "nextButton":
+          return{
+            ...state,index: state.index + 1, answer:null,
+          };
     default:
       throw new Error("Unknown action type");
   }
 }
 
 function App() {
-  const [{ questions, status, index,answer }, dispatch] = useReducer(reducer, initialState); // Destructuring state
+  const [{ questions, status, index,answer,points }, dispatch] = useReducer(reducer, initialState); // Destructuring state
 
   useEffect(() => {
     fetch("http://localhost:3030/questions")
@@ -57,6 +63,7 @@ function App() {
   }, []);
 
   const numQuestions = questions.length;
+  const maxPoints = questions.reduce((prev,cur)=> cur.points + prev,0);
 
   return (
     <div className="app">
@@ -68,11 +75,16 @@ function App() {
           <StartScreen numQuestions={numQuestions} dispatch={dispatch} />
         )}
         {status === "active" &&
+        <>
+        <Progress index={index} numQuestions={numQuestions} points={points} maxPoints={maxPoints} answer={answer}/> 
          <Question 
          question={questions[index]} 
          answer={answer} 
          dispatch={dispatch}  
          />
+
+         <NextButton dispatch={dispatch} answer={answer}/>
+        </>
          } 
       </Main>
     </div>
